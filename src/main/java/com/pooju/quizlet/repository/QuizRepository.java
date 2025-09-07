@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface QuizRepository extends MongoRepository<Quiz,String> {
 
-    @Query("{'topic': ?0, 'difficulty': ?1}")
+    @Query("{'topic': {$regex: ?0, $options: 'i'}, 'difficulty': ?1}")
     public List<Quiz> findByTopicAndDifficulty(String topic, int difficulty);
 
 }
