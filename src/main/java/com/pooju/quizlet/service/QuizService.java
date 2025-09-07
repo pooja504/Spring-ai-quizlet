@@ -1,6 +1,7 @@
 package com.pooju.quizlet.service;
 
 import com.pooju.quizlet.model.Quiz;
+import com.pooju.quizlet.repository.QuizRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -12,23 +13,28 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class QuizService {
 
     private final ChatClient chatClient;
+    private final QuizRepository quizRepository;
     @Value("classpath:prompts/UserMessage.st")
     private Resource userMessage;
     @Value("classpath:prompts/SystemMessage.st")
     private Resource systemMessage;
 
-    public QuizService(ChatClient chatClient) {
+    private Map<String, Set<String>> servedIds;
+
+    public QuizService(ChatClient chatClient, QuizRepository quizRepository) {
         this.chatClient = chatClient;
+        this.quizRepository = quizRepository;
+        servedIds = new ConcurrentHashMap<>();
     }
 
-    public Quiz generateQuiz(String topic,int difficulty){
+    private Quiz generateQuiz(String topic,int difficulty){
 
         SystemMessage systemMessage1= new SystemMessage(systemMessage);
         PromptTemplate promptTemplate= new PromptTemplate(userMessage);
@@ -43,8 +49,40 @@ public class QuizService {
                 ))
                 .call()
                 .entity(Quiz.class);
+    }
 
+    private List<Quiz> getQuizFromDB(String topic, int difficulty){
+       return quizRepository
+               .findByTopicAndDifficulty(topic,difficulty);
 
+    }
+
+    public Quiz getQuiz(String topic, int difficulty, String sessionID, Boolean refresh) {
+
+        servedIds.putIfAbsent(sessionID, ConcurrentHashMap.newKeySet());
+
+        List<Quiz> unservedQuiz = new ArrayList<>(getQuizFromDB(topic, difficulty)
+                .stream()
+                .filter(quiz -> !servedIds.get(sessionID).contains(quiz.getId()))
+                .toList());
+
+        if (!refresh){
+            if (!unservedQuiz.isEmpty()) {
+                Collections.shuffle(unservedQuiz);
+                servedIds.get(sessionID).add(unservedQuiz.get(0).getId());
+                return unservedQuiz.get(0);
+            }else {
+                Quiz quiz = generateQuiz(topic, difficulty);
+                quizRepository.save(quiz);
+                return quiz;
+            }
+        } else {
+            Quiz quiz = generateQuiz(topic, difficulty);
+            quizRepository.save(quiz);
+            servedIds.get(sessionID).add(quiz.getId());
+            return quiz;
+
+        }
 
     }
 }
