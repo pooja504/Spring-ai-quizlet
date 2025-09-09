@@ -62,13 +62,13 @@ public class QuizService {
     public Quiz getQuiz(String topic, int difficulty, String sessionID, Boolean refresh) {
 
         servedIds.putIfAbsent(sessionID, ConcurrentHashMap.newKeySet());
-        logger.info("SessionID: " + sessionID + ", Served IDs: " + servedIds.get(sessionID).toString());
+        logger.info("SessionID: " + sessionID + ", Served IDs: " + servedIds.get(sessionID).size());
 
         List<Quiz> unservedQuiz = new ArrayList<>(getQuizFromDB(topic, difficulty)
                 .stream()
                 .filter(quiz -> !servedIds.get(sessionID).contains(quiz.getId()))
                 .toList());
-        logger.info("Unserved Quiz Count: " + unservedQuiz.size());
+        logger.info("SessionID: " + sessionID + ", Unserved Quiz Count: " + (unservedQuiz.size()-1));
         if (!refresh){
             if (!unservedQuiz.isEmpty()) {
                 Collections.shuffle(unservedQuiz);
