@@ -16,7 +16,7 @@ import java.util.List;
 @Document(collection = "Quiz")
 public class Quiz {
     @Id
-    @JsonPropertyDescription("format: topic-difficulty-uuid")
+    @JsonPropertyDescription("format:5 digit random alphanumeric character")
     private String id;
     private String topic;
     private int difficulty;
