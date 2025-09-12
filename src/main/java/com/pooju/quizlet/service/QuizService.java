@@ -91,4 +91,10 @@ public class QuizService {
         }
 
     }
+
+    public Quiz getQuizById(String id){
+        Optional<Quiz> quiz=quizRepository.findById(id);
+        return quiz.orElse(null);
+    }
+
 }
