@@ -17,7 +17,7 @@ public class QuizController {
         this.quizService = quizService;
     }
 
-    @GetMapping("/quiz")
+    @PostMapping("/quiz")
     public ResponseEntity<Quiz> getQuiz(@RequestBody Request request) {
         return ResponseEntity.ok(quizService.getQuiz(request.getTopic(),
                 request.getDifficulty(),
