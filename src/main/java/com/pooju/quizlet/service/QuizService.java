@@ -85,16 +85,17 @@ public class QuizService {
             } else {
                 logger.info("No unserved quizzes available. Generating new quiz.");
                 quiz = generateQuiz(topic, difficulty);
+                quiz.setEmbedding(embeddingService.getEmbedding(quiz.getTopic()));
                 quizRepository.save(quiz);
             }
         } else {
             logger.info("Refresh requested. Generating new quiz.");
             quiz = generateQuiz(topic, difficulty);
+            quiz.setEmbedding(embeddingService.getEmbedding(quiz.getTopic()));
             quizRepository.save(quiz);
         }
 
         servedIds.get(sessionID).add(quiz.getId());
-        quizRepository.save(quiz);
         return quiz;
 
     }
